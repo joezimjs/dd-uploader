@@ -11,6 +11,8 @@
 				</div>
 			</template>
 		</DDFileInput>
+
+		<button @click=increment>CLICK ME</button>
 	</div>
 </template>
 
@@ -19,7 +21,12 @@ import DDFileInput from './components/DDFileInput.vue'
 
 export default {
 	name: 'app',
-	components: { DDFileInput }
+	components: { DDFileInput },
+	methods: {
+		increment () {
+			this.$store.commit('increment')
+		}
+	}
 }
 </script>
 
