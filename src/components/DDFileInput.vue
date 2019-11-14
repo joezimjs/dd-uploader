@@ -1,11 +1,11 @@
 <template>
 	<div :data-active="active"
-		@dragenter.prevent="highlight"
-		@dragover.prevent="highlight"
-		@dragleave.prevent="unhighlight"
-		@drop.prevent="drop"
-	>
-		<slot v-bind="{ files, onInputChange, active }" name="input">
+			@dragenter.prevent="setActive"
+			@dragover.prevent="setActive"
+			@dragleave.prevent="setInactive"
+			@drop.prevent="onDrop"
+		>
+		<slot v-bind="{ files, active, onInputChange, setActive, setInactive, removeFile }" name="input">
 			<input type="file" @change="onInputChange">
 		</slot>
 	</div>
@@ -14,28 +14,71 @@
 <script>
 export default {
 	name: 'DDFileInput',
-	data () {
-		return {
-			files: [],
-			active: false,
-			inActiveTimeout: null
+	props: {
+		value: {
+			type: Array,
+			default: () => []
+		}
+	},
+	data: () => ({
+		files: [],
+		active: false,
+		inActiveTimeout: null
+	}),
+	watch: {
+		value: {
+			handler () {
+				this.files = this.value
+			},
+			immediate: true
 		}
 	},
 	methods: {
 		onInputChange (e) {
-			this.files.push(...e.target.files)
+			this.addFiles(e.target.files)
 			e.target.value = null // reset so that selecting the same file again will still cause it to fire this change
 		},
-		highlight () {
+
+		// setActive and setInactive use timeouts, so that when you drag an item over a child element,
+		// the dragleave event that is fired won't cause a flicker. A few ms is generally plenty of
+		// time to wait for the next dragenter event to clear the timeout and set it back to active.
+		setActive () {
 			this.active = true
 			clearTimeout(this.inActiveTimeout)
 		},
-		unhighlight () {
-			this.inActiveTimeout = setTimeout(() => { this.active = false }, 10)
+		setInactive () {
+			this.inActiveTimeout = setTimeout(() => { this.active = false }, 15)
 		},
-		drop (e) {
-			this.unhighlight()
-			this.files.push(...e.dataTransfer.files)
+
+		removeFile (i) {
+			this.files.splice(i, 1)
+		},
+
+		onDrop (e) {
+			this.setInactive()
+			this.addFiles(e.dataTransfer.files)
+			this.$emit('input', this.files)
+		},
+
+		addFiles (files) {
+			let isChanged = false
+			for (let newFile of files) {
+				// Only add the file to the list of files if we don't already have it.
+				if (!this.files.some(oldFile =>
+					newFile.name === oldFile.name &&
+					newFile.lastModified === oldFile.lastModified &&
+					newFile.type === oldFile.type &&
+					newFile.size === oldFile.size
+				)) {
+					this.files.push(newFile)
+					isChanged = true
+				}
+			}
+
+			// Let outside components know we've updated
+			if (isChanged) {
+				this.$emit('input', this.files)
+			}
 		}
 	},
 	created () {
