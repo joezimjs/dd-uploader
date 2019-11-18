@@ -7,7 +7,7 @@
 					<span v-else>Drop Them</span>
 					<input type="file" @change="onInputChange" />
 				</label>
-				<ul v-for="(file, i) of files" :key="file.name + file.size + file.lastModified + file.type">
+				<ul v-for="(file, i) of appFiles" :key="file.name + file.size + file.lastModified + file.type">
 					<img :src="getUrl(file)" alt="" width=500>
 					<li @click="removeFile(i)">
 						{{ file.name }} ({{i}})
@@ -15,6 +15,7 @@
 				</ul>
 			</template>
 		</DDFileInput>
+		<button @click.prevent="uploadFiles">Upload</button>
 	</div>
 </template>
 
@@ -25,17 +26,32 @@ export default {
 	name: 'app',
 	components: { DDFileInput },
 	data: () => ({
-		appFiles: []
+		appFiles: [],
+		uploads: []
 	}),
 	methods: {
 		getUrl (file) {
 			return URL.createObjectURL(file)
+		},
+		uploadFiles() {
+			this.uploads = appFiles.map(uploadFile)
+		},
+		async uploadFile(file) {
+			let url = 'YOUR URL HERE'
+			let formData = new FormData()
+
+			formData.append('file', file)
+
+			return await fetch(url, {
+				method: 'POST',
+				body: formData
+			})
 		}
 	}
 }
 </script>
 
-<style scoped lang=stylus>
+<style scoped lang="stylus">
 #app
 	font-family: "Avenir", Helvetica, Arial, sans-serif
 	-webkit-font-smoothing: antialiased

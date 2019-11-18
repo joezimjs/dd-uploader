@@ -28,7 +28,7 @@ export default {
 	watch: {
 		value: {
 			handler () {
-				this.files = this.value
+				this.files = [...this.value]
 			},
 			immediate: true
 		}
@@ -52,6 +52,7 @@ export default {
 
 		removeFile (i) {
 			this.files.splice(i, 1)
+			this.$emit('input', this.files)
 		},
 
 		onDrop (e) {
