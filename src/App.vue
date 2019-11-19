@@ -7,10 +7,10 @@
 					<span v-else>Drop Them</span>
 					<input type="file" @change="onInputChange" />
 				</label>
-				<ul v-for="(file, i) of appFiles" :key="file.name + file.size + file.lastModified + file.type">
-					<img :src="getUrl(file)" alt="" width=500>
-					<li @click="removeFile(i)">
-						{{ file.name }} ({{i}})
+				<ul class="image-list">
+					<li v-for="(file, i) of appFiles" :key="file.name + file.size + file.lastModified + file.type" @click="removeFile(i)">
+						<img :src="getUrl(file)" alt="" width=500>
+						{{ file.name }} ({{i}}) {{ statusOf(i) }}
 					</li>
 				</ul>
 			</template>
@@ -21,6 +21,7 @@
 
 <script>
 import DDFileInput from './components/DDFileInput.vue'
+import Vue from 'vue'
 
 export default {
 	name: 'app',
@@ -33,19 +34,36 @@ export default {
 		getUrl (file) {
 			return URL.createObjectURL(file)
 		},
-		uploadFiles() {
-			this.uploads = appFiles.map(uploadFile)
+		uploadFiles () {
+			this.uploads = this.appFiles.map((file, i) =>
+				this.uploadFile(file)
+					.then(() => { Vue.set(this.uploads, i, true); console.log('success') })
+					.catch(() => { Vue.set(this.uploads, i, false); console.log('fail') })
+			)
 		},
-		async uploadFile(file) {
+		uploadFile (file) {
 			let url = 'YOUR URL HERE'
 			let formData = new FormData()
 
 			formData.append('file', file)
 
-			return await fetch(url, {
+			return fetch(url, {
 				method: 'POST',
 				body: formData
 			})
+		},
+		statusOf (i) {
+			let status = this.uploads[i]
+
+			if (status instanceof Promise) {
+				return 'loading'
+			}
+
+			if (typeof status === 'boolean') {
+				return status
+			}
+
+			return undefined
 		}
 	}
 }
@@ -77,4 +95,20 @@ label
 		position: absolute
 		visibility: hidden
 		pointer-events: none
+
+.image-list
+	display: flex
+	list-style: none
+	flex-wrap: wrap
+	padding: 0
+
+	li
+		display: flex-item
+		width: 20%
+		margin: 1rem 2.5%
+
+	img
+		max-width: 100%
+		display: block
+
 </style>
