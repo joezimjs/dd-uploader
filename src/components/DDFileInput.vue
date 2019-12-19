@@ -64,14 +64,10 @@ export default {
 		addFiles (files) {
 			let isChanged = false
 			for (let newFile of files) {
+				let id = this.createId(newFile)
 				// Only add the file to the list of files if we don't already have it.
-				if (!this.files.some(oldFile =>
-					newFile.name === oldFile.name &&
-					newFile.lastModified === oldFile.lastModified &&
-					newFile.type === oldFile.type &&
-					newFile.size === oldFile.size
-				)) {
-					this.files.push(newFile)
+				if (!this.fileExists(id)) {
+					this.files.push({ file: newFile, id, url: this.getUrl(newFile) })
 					isChanged = true
 				}
 			}
@@ -80,6 +76,15 @@ export default {
 			if (isChanged) {
 				this.$emit('input', this.files)
 			}
+		},
+		createId (file) {
+			return `${file.name}-${file.size}-${file.lastModified}-${file.type}`
+		},
+		fileExists (otherId) {
+			return this.files.some(({ id }) => id === otherId)
+		},
+		getUrl (file) {
+			return URL.createObjectURL(file)
 		}
 	},
 	created () {
